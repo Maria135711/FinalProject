@@ -8,8 +8,8 @@ class User(SqlAlchemyBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    username = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    username = sqlalchemy.Column(sqlalchemy.String, nullable=True, unique=True)
     sites = orm.relationship("Site", back_populates="user")
 
     def __repr__(self):
-        return f"<User> {self.id} {self.username} Сайты: {', '.join([s.name for s in self.sites])}"
+        return f"<User> {self.id} {self.username}"

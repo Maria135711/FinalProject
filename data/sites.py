@@ -14,4 +14,4 @@ class Site(SqlAlchemyBase):
     user = orm.relationship("User", back_populates="sites")
 
     def __repr__(self):
-        return f"<Site> {self.id} {self.name} Пользователь: {self.user.id} {self.user.username}"
+        return f"<Site> {self.id} {self.name}; Пользователь: {self.user.id} {self.user.username}"

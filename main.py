@@ -45,9 +45,17 @@ async def main():
 async def process_start_command(message: types.Message):
     user = message.from_user
     try:
-        db_function.add_user(user_id=user.id, username=user.username)
+        db_function.add_user(username=user.username)
     except Exception as e:
-        logging.info(str(e))
+        if "уже существует" in str(e):
+            await message.answer(
+                "Вы уже зарегистрированы!\n"
+                "/add - Добавить новый сайт"
+            )
+        else:
+            logger.error(f"Error: {e}")
+            await message.answer("Ошибка при регистрации")
+
     await message.reply("<b>Бот для отслеживанию сайтов</b>\n\n"
                         "Этот бот поможет вам отслеживать изменения на ваших сайтах и уведомлять вас о них.\n\n"
                         "Доступные команды:\n"
@@ -82,7 +90,7 @@ async def process_add_command(message: types.Message, state: FSMContext):
 @dp.message(Form.add_url)
 async def process_url(message: types.Message, state: FSMContext):
     url = message.text.strip()
-    if not url.startswith("https://") or url.startswith("http://"):
+    if not (url.startswith("https://") or url.startswith("http://")):
         await message.answer("Введите корректный URL (начинается с http:// или https://)")
         return
     try:
@@ -95,20 +103,20 @@ async def process_url(message: types.Message, state: FSMContext):
 
     except Exception as e:
         await message.answer(f"Ошибка: {str(e)}")
-
+        await state.clear()
 
 @dp.message(Form.add_name)
 async def site_name(message: types.Message, state: FSMContext):
     name = message.text.strip()
     data = await state.get_data()
     url = data.get("url")
-    user_id = message.from_user.id
     try:
-        db_function.add_site(name, url, user_id)
+        db_function.add_site(href=url, name=name, username=message.from_user.username)
         await message.answer("Сайт успешно добавлен!")
         await state.clear()
     except Exception as e:
         await message.answer(f"Ошибка: {str(e)}")
+        await state.clear()
 
 
 if __name__ == '__main__':

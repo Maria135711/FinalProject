@@ -27,6 +27,14 @@ class Form(StatesGroup):  # создаем статусы, через котор
     add_name = State()
 
 
+async def user_verification(user: types.User):
+    try:
+        db_function.add_user(username=user.username)
+    except Exception as e:
+        if "уже существует" in str(e):
+            pass
+
+
 async def check_site(url):
     try:
         async with aiohttp.ClientSession() as session:
@@ -41,29 +49,45 @@ async def main():
     await dp.start_polling(bot)
 
 
+def get_keyboard():
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                types.KeyboardButton(text="/add"),
+                types.KeyboardButton(text="/list"),
+            ],
+            [
+                types.KeyboardButton(text="/help"),
+            ]
+        ],
+        resize_keyboard=True
+    )
+    return keyboard
+
+
 @dp.message(Command('start'))
 async def process_start_command(message: types.Message):
     user = message.from_user
     try:
-        db_function.add_user(username=user.username)
+        await user_verification(user)
         await message.reply("<b>Бот для отслеживанию сайтов</b>\n\n"
                             "Этот бот поможет вам отслеживать изменения на ваших сайтах и уведомлять вас о них.\n\n"
                             "Доступные команды:\n"
                             "/add - Добавить новый сайт\n"
                             "/list - Список ваших сайтов\n"
                             "/delete - Удалить сайт\n"
-                            "/history - Просмотреть историю изменений")
+                            "/history - Просмотреть историю изменений",
+                            reply_markup=get_keyboard())
     except Exception as e:
         if "уже существует" in str(e):
             await message.answer(
                 "Вы уже зарегистрированы!\n"
-                "/add - Добавить новый сайт"
+                "/add - Добавить новый сайт",
+                reply_markup=get_keyboard()
             )
         else:
             logger.error(f"Error: {e}")
             await message.answer("Ошибка при регистрации")
-
-
 
 
 @dp.message(Command('help'))
@@ -77,11 +101,13 @@ async def process_help_command(message: types.Message):
                         "/add - Добавить новый сайт\n"
                         "/list - Список ваших сайтов\n"
                         "/delete - Удалить сайт\n"
-                        "/history - Просмотреть историю изменений")
+                        "/history - Просмотреть историю изменений",
+                        reply_markup=get_keyboard())
 
 
 @dp.message(Command('add'))
 async def process_add_command(message: types.Message, state: FSMContext):
+    await user_verification(message.from_user)
     await state.set_state(Form.add_url)
     await message.answer("<b>Добавление нового сайта</b>\n\n"
                          "Пожалуйста, отправьте мне URL вашего сайта, который вы хотите отслеживать.\n"
@@ -104,6 +130,7 @@ async def process_url(message: types.Message, state: FSMContext):
 
     except Exception as e:
         await message.answer(f"Ошибка: {str(e)}")
+
 
 @dp.message(Form.add_name)
 async def site_name(message: types.Message, state: FSMContext):

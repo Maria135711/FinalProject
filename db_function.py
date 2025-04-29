@@ -53,7 +53,7 @@ def add_site(href, name, username):
 
         with open(output_file, "w", encoding="utf-8") as file:
             file.write(str(soup.prettify()))
-
+        site.html = output_file
         db_sess.add(site)
         db_sess.commit()
         logging.info(f"Сайт {name} успешно добавлен пользователю {username}")

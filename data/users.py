@@ -9,6 +9,7 @@ class User(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     username = sqlalchemy.Column(sqlalchemy.String, nullable=True, unique=True)
+    tg_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=True, unique=True)
     sites = orm.relationship("Site", back_populates="user")
 
     def __repr__(self):

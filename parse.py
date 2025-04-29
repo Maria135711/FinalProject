@@ -1,5 +1,5 @@
 from google import genai
-from google.genai import types
+from google.genai import types as genai_types
 import asyncio
 import logging
 from db_function import *
@@ -49,7 +49,7 @@ async def recognition_update():
                     response = client.models.generate_content(
                         model="gemini-2.0-flash",
                         contents=[html_file_prev, html_new],
-                        config=types.GenerateContentConfig(
+                        config=genai_types.GenerateContentConfig(
                             system_instruction="""Тебе даётся два html файла твоя задача показать что нового в тексте второго html файла не 
                             было в первом ты должен сформулировать текстом что изменилась нужно описывать изменение контента,
                             изменение структуры html описывать не нужно""",

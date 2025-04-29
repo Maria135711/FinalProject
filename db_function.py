@@ -72,6 +72,12 @@ def get_sites_username(username):
         sites = db_sess.query(Site).options(joinedload(Site.user)).filter(Site.user_id == user_id).all()
         return sites
 
+def get_all_users():
+    with Session() as db_sess:
+        users = db_sess.query(User).all()
+        return users
+
+
 def delete_site(name, username):
     with Session() as db_sess:
         user_id = get_id_username_with_session(username, db_sess)

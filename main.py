@@ -46,6 +46,13 @@ async def process_start_command(message: types.Message):
     user = message.from_user
     try:
         db_function.add_user(username=user.username)
+        await message.reply("<b>Бот для отслеживанию сайтов</b>\n\n"
+                            "Этот бот поможет вам отслеживать изменения на ваших сайтах и уведомлять вас о них.\n\n"
+                            "Доступные команды:\n"
+                            "/add - Добавить новый сайт\n"
+                            "/list - Список ваших сайтов\n"
+                            "/delete - Удалить сайт\n"
+                            "/history - Просмотреть историю изменений")
     except Exception as e:
         if "уже существует" in str(e):
             await message.answer(
@@ -56,13 +63,7 @@ async def process_start_command(message: types.Message):
             logger.error(f"Error: {e}")
             await message.answer("Ошибка при регистрации")
 
-    await message.reply("<b>Бот для отслеживанию сайтов</b>\n\n"
-                        "Этот бот поможет вам отслеживать изменения на ваших сайтах и уведомлять вас о них.\n\n"
-                        "Доступные команды:\n"
-                        "/add - Добавить новый сайт\n"
-                        "/list - Список ваших сайтов\n"
-                        "/delete - Удалить сайт\n"
-                        "/history - Просмотреть историю изменений")
+
 
 
 @dp.message(Command('help'))
@@ -103,7 +104,6 @@ async def process_url(message: types.Message, state: FSMContext):
 
     except Exception as e:
         await message.answer(f"Ошибка: {str(e)}")
-        await state.clear()
 
 @dp.message(Form.add_name)
 async def site_name(message: types.Message, state: FSMContext):

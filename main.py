@@ -1,3 +1,10 @@
+import os
+
+if not os.path.exists("htmls"):
+    os.mkdir("htmls")
+if not os.path.exists("db"):
+    os.mkdir("db")
+
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties

@@ -36,7 +36,7 @@ class Form(StatesGroup):  # создаем статусы, через котор
 
 async def user_verification(user: types.User):
     try:
-        db_function.add_user(username=user.username)
+        db_function.add_user(username=user.username, tg_id=user.id)
     except Exception as e:
         if "уже существует" in str(e):
             pass

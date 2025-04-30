@@ -24,11 +24,12 @@ def get_id_username_with_session(username, db_sess):
     except AttributeError:
         raise Exception(f"Пользователь {username} не найден")
 
-def add_user(username):
+def add_user(username, tg_id):
     with Session() as db_sess:
         if not db_sess.query(User).filter(User.username == username).first():
             user = User()
             user.username = username
+            user.tg_id = tg_id
             db_sess.add(user)
             db_sess.commit()
             logging.info(f"Пользователь {username} успешно добавлен")

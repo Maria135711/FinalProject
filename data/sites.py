@@ -11,6 +11,7 @@ class Site(SqlAlchemyBase):
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     html = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    last_hash = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     user = orm.relationship("User", back_populates="sites")
 
     def __repr__(self):

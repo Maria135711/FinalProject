@@ -24,6 +24,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
 )
 BOT_TOKEN = "8058190209:AAGSkN4r1f7quq_T8PX2Ae49RIqrgSrMr5M"
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 dp = Dispatcher()
 logger = logging.getLogger(__name__)
@@ -32,6 +33,15 @@ logger = logging.getLogger(__name__)
 class Form(StatesGroup):  # создаем статусы, через которые будет проходить пользователь
     add_url = State()
     add_name = State()
+
+async def send(user_id: int, message_text: str):
+    try:
+        chat = await bot.get_chat(user_id)
+        if chat:
+            await bot.send_message(user_id, message_text)
+            logger.info(f"User {user_id}")
+    except Exception as e:
+        logger.error(f"Send{e}")
 
 
 async def user_verification(user: types.User):
@@ -52,7 +62,6 @@ async def check_site(url):
 
 
 async def main():
-    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     await dp.start_polling(bot)
 
 
@@ -144,8 +153,11 @@ async def site_name(message: types.Message, state: FSMContext):
     name = message.text.strip()
     data = await state.get_data()
     url = data.get("url")
+    username = message.from_user.username
+    user_id = message.from_user.id
     try:
-        db_function.add_site(href=url, name=name, username=message.from_user.username)
+        db_function.add_site(href=url, name=name, username=username)
+        await send(user_id, "Сайт успешно добавлен!")
         await message.answer("Сайт успешно добавлен!")
         await state.clear()
     except Exception as e:

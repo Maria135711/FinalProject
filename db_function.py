@@ -24,11 +24,12 @@ def get_id_username_with_session(username, db_sess):
     except AttributeError:
         raise Exception(f"Пользователь {username} не найден")
 
-def add_user(username):
+def add_user(username, tg_id):
     with Session() as db_sess:
         if not db_sess.query(User).filter(User.username == username).first():
             user = User()
             user.username = username
+            user.tg_id = tg_id
             db_sess.add(user)
             db_sess.commit()
             logging.info(f"Пользователь {username} успешно добавлен")
@@ -71,6 +72,12 @@ def get_sites_username(username):
         user_id = get_id_username_with_session(username, db_sess)
         sites = db_sess.query(Site).options(joinedload(Site.user)).filter(Site.user_id == user_id).all()
         return sites
+
+def get_all_users():
+    with Session() as db_sess:
+        users = db_sess.query(User).all()
+        return users
+
 
 def delete_site(name, username):
     with Session() as db_sess:

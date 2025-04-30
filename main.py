@@ -1,3 +1,10 @@
+import os
+
+if not os.path.exists("htmls"):
+    os.mkdir("htmls")
+if not os.path.exists("db"):
+    os.mkdir("db")
+
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
@@ -29,7 +36,7 @@ class Form(StatesGroup):  # создаем статусы, через котор
 
 async def user_verification(user: types.User):
     try:
-        db_function.add_user(username=user.username)
+        db_function.add_user(username=user.username, tg_id=user.id)
     except Exception as e:
         if "уже существует" in str(e):
             pass

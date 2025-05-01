@@ -19,6 +19,7 @@ from aiogram.fsm.state import StatesGroup, State
 import logging
 import aiohttp
 import db_function
+from parse import *
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -34,15 +35,24 @@ class Form(StatesGroup):  # создаем статусы, через котор
     add_url = State()
     add_name = State()
 
-async def send(user_id: int, message_text: str):
+async def send(user_id, message_text):
     try:
         chat = await bot.get_chat(user_id)
         if chat:
             await bot.send_message(user_id, message_text)
-            logger.info(f"User {user_id}")
     except Exception as e:
-        logger.error(f"Send{e}")
+        logger.error(f"Send error: {e}")
 
+async def send_updates():
+    while True:
+        if recognition_stack:
+            update = recognition_stack.pop(0)
+            tg_id = update["user"].tg_id
+            text = f"<b>Новые изменения на сайте {update['site'].name}:</b>\n\n{update['text']}\n\n{update['site'].href}"
+            await send(tg_id, text)
+            await asyncio.sleep(1)
+        else:
+            await asyncio.sleep(10)
 
 async def user_verification(user: types.User):
     try:
@@ -62,6 +72,9 @@ async def check_site(url):
 
 
 async def main():
+    asyncio.create_task(check_all_site())
+    asyncio.create_task(recognition_update())
+    asyncio.create_task(send_updates())
     await dp.start_polling(bot)
 
 

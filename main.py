@@ -35,6 +35,8 @@ class Form(StatesGroup):  # создаем статусы, через котор
     add_url = State()
     add_name = State()
     add_interval = State()
+    delete_site = State()
+
 
 async def send(user_id, message_text):
     try:
@@ -43,6 +45,7 @@ async def send(user_id, message_text):
             await bot.send_message(user_id, message_text)
     except Exception as e:
         logger.error(f"Send error: {e}")
+
 
 async def send_updates():
     while True:
@@ -54,6 +57,7 @@ async def send_updates():
             await asyncio.sleep(1)
         else:
             await asyncio.sleep(10)
+
 
 async def user_verification(user: types.User):
     try:
@@ -130,7 +134,6 @@ async def process_help_command(message: types.Message):
                         "<b>Как использовать:</b>\n"
                         "1. Напишите /add для добавления нового сайта\n"
                         "2. Укажите интервал проверки (в минутах)\n"
-                        "3. Опционально укажите CSS селектор для выбора конкретного элемента страницы\n\n"
                         "<b>Доступные команды:</b>\n"
                         "/add - Добавить новый сайт\n"
                         "/list - Список ваших сайтов\n"
@@ -145,7 +148,8 @@ async def process_list_command(message: types.Message):
         user = message.from_user
         sites = db_function.get_sites_username(user.username)
         if not sites:
-            await message.answer("У вас нет отслеживаемых сайтов. Добавьте сайт командой /add")
+            await message.answer("У вас нет отслеживаемых сайтов. Добавьте сайт командой /add",
+                                 reply_markup=get_keyboard())
             return
         response = ["<b>Ваши отслеживаемые сайты:</b>\n"]
         for site in sites:
@@ -153,8 +157,44 @@ async def process_list_command(message: types.Message):
                             f"URL:  {site.href}\n")
         await message.answer("\n".join(response), reply_markup=get_keyboard())
     except Exception as e:
-        logger.error(f"Error in /list{e}")
-        await message.answer("Ошибка при получении списка сайтов")
+        logger.error(f"Error in /list {e}")
+        await message.answer("Ошибка при получении списка сайтов", reply_markup=get_keyboard())
+
+
+@dp.message(Command('delete'))
+async def process_delete_command(message: types.Message, state: FSMContext):
+    try:
+        user = message.from_user
+        sites = db_function.get_sites_username(user.username)
+
+        if not sites:
+            await message.answer("У вас нет сайтов для удаления", reply_markup=get_keyboard())
+            return
+        buttons = [
+            [InlineKeyboardButton(text=site.name, callback_data=f"delete_{site.name}")]
+            for site in sites
+        ]
+
+        await message.answer(
+        "Выберите сайт для удаления:",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+    )
+    except Exception as e:
+        await message.answer(f"Ошибка: {e}", reply_markup=get_keyboard())
+
+
+@dp.callback_query(lambda c: c.data.startswith('delete_'))
+async def process_delete_callback(callback: types.CallbackQuery):
+    try:
+        site_name = callback.data[7:]
+        username = callback.from_user.username
+        db_function.delete_site(site_name, username)
+        await callback.message.edit_text(f"Сайт '{site_name}' удалён")
+        await callback.answer()
+    except Exception as e:
+        logger.error(f"Error in /delete {e}")
+        await callback.message.answer("Ошибка при удалении сайта", reply_markup=get_keyboard())
+        await callback.answer()
 
 
 @dp.message(Command('add'))
@@ -181,7 +221,7 @@ async def process_url(message: types.Message, state: FSMContext):
         await message.answer("Введите имя для сайта")
 
     except Exception as e:
-        await message.answer(f"Ошибка: {str(e)}")
+        await message.answer(f"Ошибка: {str(e)}", reply_markup=get_keyboard())
 
 
 @dp.message(Form.add_name)
@@ -197,7 +237,7 @@ async def site_name(message: types.Message, state: FSMContext):
         await message.answer("Сайт успешно добавлен!", reply_markup=get_keyboard())
         await state.clear()
     except Exception as e:
-        await message.answer(f"Ошибка: {str(e)}")
+        await message.answer(f"Ошибка: {str(e)}", reply_markup=get_keyboard())
         await state.clear()
 
 

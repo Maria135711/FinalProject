@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 class Form(StatesGroup):  # создаем статусы, через которые будет проходить пользователь
     add_url = State()
     add_name = State()
+    add_interval = State()
 
 async def send(user_id, message_text):
     try:
@@ -132,6 +133,24 @@ async def process_help_command(message: types.Message):
                         "/delete - Удалить сайт\n"
                         "/history - Просмотреть историю изменений",
                         reply_markup=get_keyboard())
+
+
+@dp.message(Command('list'))
+async def process_list_command(message: types.Message):
+    try:
+        user = message.from_user
+        sites = db_function.get_sites_username(user.username)
+        if not sites:
+            await message.answer("У вас нет отслеживаемых сайтов. Добавьте сайт командой /add")
+            return
+        response = ["<b>Ваши отслеживаемые сайты:</b>\n"]
+        for site in sites:
+            response.append(f"\n<b>{site.name}</b>\n"
+                            f"URL:  {site.href}\n")
+        await message.answer("\n".join(response))
+    except Exception as e:
+        logger.error(f"Error in /list{e}")
+        await message.answer("Ошибка при получении списка сайтов")
 
 
 @dp.message(Command('add'))

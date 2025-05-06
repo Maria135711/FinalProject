@@ -85,7 +85,7 @@ def delete_site(name, username):
         site = db_sess.query(Site).options(joinedload(Site.user)).filter(Site.user_id == user_id,
                                                                          Site.name == name).first()
         if site:
-            os.remove(f"htmls/{name}_{user_id}.html")
+            os.remove(f"htmls/{name}_{username}.html")
             db_sess.delete(site)
             db_sess.commit()
             logging.info(f"Сайт {name} у пользователя {username} успешно удален")

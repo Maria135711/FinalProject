@@ -3,13 +3,15 @@ import logging
 from db_function import *
 import aiohttp
 from config import *
-from groq import Groq
 from bs4 import BeautifulSoup
+from google import genai
+from google.genai import types as genai_types
 
-client = Groq(
-    api_key=GROQ_API_KEY,
-)
+# client = Groq(
+#     api_key=GROQ_API_KEY,
+# )
 
+client = genai.Client(api_key=AI_API_KEY)
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
@@ -21,23 +23,21 @@ async def request(sys_instruction, user_input):
     success = False
     if type(user_input) == str:
         user_input = [user_input]
-    messages = [
-        {
-            "role": "system",
-            "content": f"""{sys_instruction}""".replace("\n", " ")
-        },
-    ] + [{"role": "user", "content": f"{i}",} for i in user_input]
+    new_user_input = []
+    for i, v in enumerate(user_input):
+        new_user_input.extend([v[i:i + 5000] for i in range(0, len(v), 5000)])
+    messages = [i for i in new_user_input]
 
     while not success:
         try:
-            chat_completion = client.chat.completions.create(
-                messages=messages,
-                model="deepseek-r1-distill-llama-70b",
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=sys_instruction),
+                contents=messages
             )
-            success = True
-            response = chat_completion.choices[0].message.content
+            response = response.text.strip()
             print(response)
-            response = response.split("</think>")[1].strip()
             return response
         except Exception as e:
             logging.warning(f"Ошибка запроса: {e}")
@@ -89,19 +89,25 @@ async def recognition_update():
             with open(site.html, "r", encoding="utf-8") as f:
                 soup = BeautifulSoup(f.read(), 'html.parser')
                 html_file_prev = soup.get_text(separator=" ", strip=True)
-            sys_instruction = f"""Тебе даётся два текста твоя задача показать что нового в тексте
+            sys_instruction = f"""Тебе даётся два текста с сайтов  твоя задача показать что нового в тексте
                             второго текста не было в первом ты должен сформулировать текстом
                             ты должен описать только изменения не нужно писать "на второй странице изменилось ..." 
-                            ты должен описать только изменения если существенные для пользователя изменений не найдено
-                            то ты должен ответить чётко в так "НЕТ"""
+                            ты должен описать только изменения если существенные для пользователя учитывай только 
+                            изменения содержание если допустим последовательность слов изменилось 
+                            или использовались другие слова но сути самого предложения это не поменяло
+                            то это не считается изменением но если добавилось что-то новое то это считается, 
+                            если изменений не найдено то ты должен ответить чётко так "НЕТ" """
             response = await request(sys_instruction, f"Первый: {html_file_prev}\nВторой: {html_new}")
             if response == "НЕТ":
                 logging.info(f"Изменения на сайте '{site.name}' у пользователя '{user.username}' не распознаны")
             else:
                 recognition_stack.append({"user": user, "site": site, "text": response})
                 logging.info(f"Изменения на сайте '{site.name}' у пользователя '{user.username}' распознаны")
+            response_site = requests.get(site.href)
+            response_site.raise_for_status()
+            soup = BeautifulSoup(response_site.text, 'html.parser')
             with open(site.html, "w", encoding="utf-8") as f:
-                f.write(html_new)
+                f.write(soup.prettify())
 
 
 async def main():

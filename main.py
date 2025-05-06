@@ -87,6 +87,10 @@ def get_keyboard():
                 types.KeyboardButton(text="/list"),
             ],
             [
+                types.KeyboardButton(text="/delete"),
+                types.KeyboardButton(text="/history"),
+            ],
+            [
                 types.KeyboardButton(text="/help"),
             ]
         ],
@@ -147,7 +151,7 @@ async def process_list_command(message: types.Message):
         for site in sites:
             response.append(f"\n<b>{site.name}</b>\n"
                             f"URL:  {site.href}\n")
-        await message.answer("\n".join(response))
+        await message.answer("\n".join(response), reply_markup=get_keyboard())
     except Exception as e:
         logger.error(f"Error in /list{e}")
         await message.answer("Ошибка при получении списка сайтов")
@@ -190,7 +194,7 @@ async def site_name(message: types.Message, state: FSMContext):
     try:
         db_function.add_site(href=url, name=name, username=username)
         await send(user_id, "Сайт успешно добавлен!")
-        await message.answer("Сайт успешно добавлен!")
+        await message.answer("Сайт успешно добавлен!", reply_markup=get_keyboard())
         await state.clear()
     except Exception as e:
         await message.answer(f"Ошибка: {str(e)}")

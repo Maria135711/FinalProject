@@ -70,7 +70,7 @@ async def check_all_site():
                 if soup.prettify() != html_file_prev:
                     stack.append({"user": user, "site": site, "html_new": soup.prettify()})
                     logging.info(f"Новые изменения на сайте '{site.name}' у пользователя '{user.username}'")
-        await asyncio.sleep(300)
+        await asyncio.sleep(600)
 
 
 recognition_stack = []

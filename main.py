@@ -233,7 +233,6 @@ async def site_name(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
         db_function.add_site(href=url, name=name, username=username)
-        await send(user_id, "Сайт успешно добавлен!")
         await message.answer("Сайт успешно добавлен!", reply_markup=get_keyboard())
         await state.clear()
     except Exception as e:

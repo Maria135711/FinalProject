@@ -24,7 +24,7 @@ from parse import *
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
 )
-BOT_TOKEN = "8058190209:AAGSkN4r1f7quq_T8PX2Ae49RIqrgSrMr5M"
+BOT_TOKEN = BOT_TOKEN
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 dp = Dispatcher()

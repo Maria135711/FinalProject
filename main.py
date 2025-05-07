@@ -264,5 +264,22 @@ async def site_name(message: types.Message, state: FSMContext):
         await state.clear()
 
 
+@dp.message()
+async def handle_unknown_commands(message: types.Message):
+    response_text = (
+        "<b>Я не умею читать!</b>\n\n"
+        "Вот что я понимаю:\n"
+        " /start - Перезапустить бота\n"
+        " /add - Добавить сайт\n"
+        " /list - Показать список сайты\n"
+        " /delete - Удалить сайт\n"
+        " /history - История изменений\n"
+        " /help - Справка\n\n"
+        "Или используйте кнопки меню"
+    )
+
+    await message.answer(text=response_text, reply_markup=get_keyboard())
+
+
 if __name__ == '__main__':
     asyncio.run(main())

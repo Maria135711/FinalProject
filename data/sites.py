@@ -1,6 +1,8 @@
 import sqlalchemy
 from .db_session import SqlAlchemyBase
 from sqlalchemy import orm
+from datetime import datetime
+
 
 class Site(SqlAlchemyBase):
     __tablename__ = 'sites'
@@ -10,6 +12,7 @@ class Site(SqlAlchemyBase):
     href = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     html = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    history = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
 
     user = orm.relationship("User", back_populates="sites")

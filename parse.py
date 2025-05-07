@@ -56,6 +56,7 @@ async def answer_on_site_info(user, question):
     response = await request(sys_instruction, sites_texts + [question])
     return response
 
+
 async def check_all_site():
     while True:
         print("check")
@@ -102,6 +103,10 @@ async def recognition_update():
                 logging.info(f"Изменения на сайте '{site.name}' у пользователя '{user.username}' не распознаны")
             else:
                 recognition_stack.append({"user": user, "site": site, "text": response})
+                with Session() as db_sess:
+                    db_site = db_sess.query(Site).filter(Site.id == site.id).first()
+                    if db_site:
+                        add_history(db_site.id, response)
                 logging.info(f"Изменения на сайте '{site.name}' у пользователя '{user.username}' распознаны")
             response_site = requests.get(site.href)
             response_site.raise_for_status()

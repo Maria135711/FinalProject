@@ -7,15 +7,20 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import logging
+from datetime import datetime
 import sqlalchemy
+
 db_session.global_init("db/parser.db")
 engine = create_engine('sqlite:///db/parser.db')
 Session = sessionmaker(bind=engine)
+import json
+
 
 def get_id_username(username):
     with Session() as db_sess:
         user = db_sess.query(User).filter(User.username == username).first()
         return user.id
+
 
 def get_id_username_with_session(username, db_sess):
     try:
@@ -23,6 +28,7 @@ def get_id_username_with_session(username, db_sess):
         return user_id
     except AttributeError:
         raise Exception(f"Пользователь {username} не найден")
+
 
 def add_user(username, tg_id):
     with Session() as db_sess:
@@ -35,6 +41,7 @@ def add_user(username, tg_id):
             logging.info(f"Пользователь {username} успешно добавлен")
         else:
             raise Exception(f"Пользователь {username} уже существует")
+
 
 def add_site(href, name, username):
     with Session() as db_sess:
@@ -60,7 +67,6 @@ def add_site(href, name, username):
         logging.info(f"Сайт {name} успешно добавлен пользователю {username}")
 
 
-
 def get_sites_userid(user_id):
     with Session() as db_sess:
         sites = db_sess.query(Site).options(joinedload(Site.user)).filter(Site.user_id == user_id).all()
@@ -72,6 +78,7 @@ def get_sites_username(username):
         user_id = get_id_username_with_session(username, db_sess)
         sites = db_sess.query(Site).options(joinedload(Site.user)).filter(Site.user_id == user_id).all()
         return sites
+
 
 def get_all_users():
     with Session() as db_sess:
@@ -91,3 +98,42 @@ def delete_site(name, username):
             logging.info(f"Сайт {name} у пользователя {username} успешно удален")
         else:
             raise Exception(f"Сайт {name} у пользователя {username} не найден")
+
+
+def add_history(site_id, changes):
+    with Session() as db_sess:
+        site = db_sess.query(Site).filter(Site.id == site_id).first()
+        if site:
+            history = []
+            if site.history:
+                try:
+                    history = json.loads(site.history)
+                except json.JSONDecodeError:
+                    history = []
+            change = {"date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "change": changes}
+            history.append(change)
+            site.history = json.dumps(history)
+            db_sess.commit()
+            logging.info(f"Изменения на сайте '{site.name}' успешно добавлены")
+
+
+def get_history(site_id):
+    with Session() as db_sess:
+        history = db_sess.query(Site).filter(Site.id == site_id).first().history.all()
+        return history
+
+
+def get_history_by_username(username):
+    with Session() as db_sess:
+        user_id = get_id_username_with_session(username, db_sess)
+        sites = db_sess.query(Site).filter(Site.user_id == user_id).all()
+        history = []
+        for site in sites:
+            if site.history:
+                try:
+                    site_history = json.loads(site.history)
+                    for change in site_history:
+                        history.append(f"<b>{site.name}</b>\n{site.href}\n{change['date']}\n{change['change']}\n")
+                except json.JSONDecodeError:
+                    history.append(f"<b>{site.name}</b> ({site.href}):\nОшибка чтения истории\n")
+        return history if history else ["История изменений пуста"]

@@ -87,15 +87,15 @@ def get_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [
-                types.KeyboardButton(text="/add"),
-                types.KeyboardButton(text="/list"),
+                types.KeyboardButton(text="Добавить сайт"),
+                types.KeyboardButton(text="Список сайтов"),
             ],
             [
-                types.KeyboardButton(text="/delete"),
-                types.KeyboardButton(text="/history"),
+                types.KeyboardButton(text="Удалить сайт"),
+                types.KeyboardButton(text="История сайтов"),
             ],
             [
-                types.KeyboardButton(text="/help"),
+                types.KeyboardButton(text="Справочная информация"),
             ]
         ],
         resize_keyboard=True
@@ -142,7 +142,7 @@ async def process_help_command(message: types.Message):
                         reply_markup=get_keyboard())
 
 
-@dp.message(Command('list'))
+@dp.message(lambda message: message.text == "Список сайтов")
 async def process_list_command(message: types.Message):
     try:
         user = message.from_user
@@ -161,7 +161,31 @@ async def process_list_command(message: types.Message):
         await message.answer("Ошибка при получении списка сайтов", reply_markup=get_keyboard())
 
 
-@dp.message(Command('delete'))
+@dp.message(lambda message: message.text == "История сайтов")
+async def process_history_command(message: types.Message):
+    try:
+        user = message.from_user
+        history = db_function.get_history_by_username(user.username)
+
+        if not history or history[0] == "История изменений пуста":
+            await message.answer("История изменений пуста", reply_markup=get_keyboard())
+            return
+
+        response = ["<b>История изменений:</b>\n"]
+        for item in history:
+            response.append(f"{item}")
+
+        message_text = "\n".join(response)
+        for i in range(0, len(message_text), 4000):
+            part = message_text[i:i + 4000]
+            await message.answer(part, reply_markup=get_keyboard())
+
+    except Exception as e:
+        logger.error(f"Error in /history {e}")
+        await message.answer("Ошибка при получении истории изменений", reply_markup=get_keyboard())
+
+
+@dp.message(lambda message: message.text == "Удалить сайт")
 async def process_delete_command(message: types.Message, state: FSMContext):
     try:
         user = message.from_user
@@ -176,9 +200,9 @@ async def process_delete_command(message: types.Message, state: FSMContext):
         ]
 
         await message.answer(
-        "Выберите сайт для удаления:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
-    )
+            "Выберите сайт для удаления:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
     except Exception as e:
         await message.answer(f"Ошибка: {e}", reply_markup=get_keyboard())
 
@@ -197,7 +221,7 @@ async def process_delete_callback(callback: types.CallbackQuery):
         await callback.answer()
 
 
-@dp.message(Command('add'))
+@dp.message(lambda message: message.text == "Добавить сайт")
 async def process_add_command(message: types.Message, state: FSMContext):
     await user_verification(message.from_user)
     await state.set_state(Form.add_url)

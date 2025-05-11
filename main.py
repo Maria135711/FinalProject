@@ -264,21 +264,42 @@ async def site_name(message: types.Message, state: FSMContext):
         await state.clear()
 
 
+# @dp.message()
+# async def handle_unknown_commands(message: types.Message):
+#     response_text = (
+#         "<b>Я не умею читать!</b>\n\n"
+#         "Вот что я понимаю:\n"
+#         " /start - Перезапустить бота\n"
+#         " /add - Добавить сайт\n"
+#         " /list - Показать список сайты\n"
+#         " /delete - Удалить сайт\n"
+#         " /history - История изменений\n"
+#         " /help - Справка\n\n"
+#         "Или используйте кнопки меню"
+#     )
+#
+#     await message.answer(text=response_text, reply_markup=get_keyboard())
+
+
 @dp.message()
 async def handle_unknown_commands(message: types.Message):
-    response_text = (
-        "<b>Я не умею читать!</b>\n\n"
-        "Вот что я понимаю:\n"
-        " /start - Перезапустить бота\n"
-        " /add - Добавить сайт\n"
-        " /list - Показать список сайты\n"
-        " /delete - Удалить сайт\n"
-        " /history - История изменений\n"
-        " /help - Справка\n\n"
-        "Или используйте кнопки меню"
-    )
+    if message.voice:
+        voice = message.voice
+        file_id = voice.file_id
 
+        # Получаем информацию о файле
+        file = await bot.get_file(file_id)
+        file_path = file.file_path
+
+        # Скачиваем файл
+        download_path = f"voice_{file_id}.ogg"  # Голосовые сообщения обычно в формате .ogg
+        await bot.download_file(file_path, destination=download_path)
+        message_text = transcribe_audio(download_path)
+    else:
+        message_text = message.text
+    response_text = await answer_on_site_info(message.from_user.username, message_text)
     await message.answer(text=response_text, reply_markup=get_keyboard())
+
 
 
 if __name__ == '__main__':

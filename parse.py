@@ -6,10 +6,11 @@ from config import *
 from bs4 import BeautifulSoup
 from google import genai
 from google.genai import types as genai_types
+from groq import Groq
 
-# client = Groq(
-#     api_key=GROQ_API_KEY,
-# )
+groq_client = Groq(
+     api_key=GROQ_API_KEY,
+)
 
 client = genai.Client(api_key=AI_API_KEY)
 logging.basicConfig(
@@ -18,6 +19,17 @@ logging.basicConfig(
 
 stack = []
 
+def transcribe_audio(filename):
+    with open(filename, "rb") as file:
+        transcription = groq_client.audio.transcriptions.create(
+            file=(filename, file.read()),
+            model="whisper-large-v3-turbo",
+            response_format="json",
+            temperature=0.0,
+        )
+
+    os.remove(filename)
+    return transcription.text
 
 async def request(sys_instruction, user_input):
     success = False
@@ -44,8 +56,8 @@ async def request(sys_instruction, user_input):
             await asyncio.sleep(5)
 
 
-async def answer_on_site_info(user, question):
-    sites = get_sites_username(user.username)
+async def answer_on_site_info(username, question):
+    sites = get_sites_username(username)
     sites_texts = []
     for site in sites:
         with open(site.html, "r", encoding="utf-8") as f:

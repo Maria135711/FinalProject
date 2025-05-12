@@ -128,12 +128,11 @@ async def process_start_command(message: types.Message):
             await message.answer("Ошибка при регистрации")
 
 
-@dp.message(Command('help'))
+@dp.message(lambda message: message.text in ["Справочная информация", "/help"])
 async def process_help_command(message: types.Message):
     await message.reply("<b>Справочная информация</b>\n\n"
                         "<b>Как использовать:</b>\n"
                         "1. Напишите /add для добавления нового сайта\n"
-                        "2. Укажите интервал проверки (в минутах)\n"
                         "<b>Доступные команды:</b>\n"
                         "/add - Добавить новый сайт\n"
                         "/list - Список ваших сайтов\n"
@@ -142,7 +141,7 @@ async def process_help_command(message: types.Message):
                         reply_markup=get_keyboard())
 
 
-@dp.message(lambda message: message.text == "Список сайтов")
+@dp.message(lambda message: message.text in ["Список сайтов", "/list"])
 async def process_list_command(message: types.Message):
     try:
         user = message.from_user
@@ -161,7 +160,7 @@ async def process_list_command(message: types.Message):
         await message.answer("Ошибка при получении списка сайтов", reply_markup=get_keyboard())
 
 
-@dp.message(lambda message: message.text == "История сайтов")
+@dp.message(lambda message: message.text in ["История сайтов", "/history"])
 async def process_history_command(message: types.Message):
     try:
         user = message.from_user
@@ -185,7 +184,7 @@ async def process_history_command(message: types.Message):
         await message.answer("Ошибка при получении истории изменений", reply_markup=get_keyboard())
 
 
-@dp.message(lambda message: message.text == "Удалить сайт")
+@dp.message(lambda message: message.text in  ["Удалить сайт", "/delete"])
 async def process_delete_command(message: types.Message, state: FSMContext):
     try:
         user = message.from_user
@@ -221,7 +220,7 @@ async def process_delete_callback(callback: types.CallbackQuery):
         await callback.answer()
 
 
-@dp.message(lambda message: message.text == "Добавить сайт")
+@dp.message(lambda message: message.text in ["Добавить сайт", "/add"])
 async def process_add_command(message: types.Message, state: FSMContext):
     await user_verification(message.from_user)
     await state.set_state(Form.add_url)

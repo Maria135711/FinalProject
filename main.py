@@ -33,6 +33,7 @@ class Form(StatesGroup):  # создаем статусы, через котор
     add_name = State()
     add_interval = State()
     delete_site = State()
+    question = State()
 
 
 async def send(user_id, message_text):
@@ -93,6 +94,7 @@ def get_keyboard():
             ],
             [
                 types.KeyboardButton(text="Справочная информация"),
+                types.KeyboardButton(text="Задать вопрос"),
             ]
         ],
         resize_keyboard=True
@@ -112,7 +114,8 @@ async def process_start_command(message: types.Message):
                             "/list - Список ваших сайтов\n"
                             "/delete - Удалить сайт\n"
                             "/history - Просмотреть историю изменений\n"
-                            "/cancel - Отменить действие",
+                            "/cancel - Отменить действие\n"
+                            "/questions - Ответы на вопросы на основе отслежеваюмых сайтов",
                             reply_markup=get_keyboard())
     except Exception as e:
         if "уже существует" in str(e):
@@ -136,7 +139,8 @@ async def process_help_command(message: types.Message):
                         "/list - Список ваших сайтов\n"
                         "/delete - Удалить сайт\n"
                         "/history - Просмотреть историю изменений\n"
-                        "/cancel - Отменить действие",
+                        "/cancel - Отменить действие\n"
+                        "/questions - Ответы на вопросы на основе отслежеваюмых сайтов",
                         reply_markup=get_keyboard())
 
 
@@ -274,25 +278,14 @@ async def site_name(message: types.Message, state: FSMContext):
         await state.clear()
 
 
-# @dp.message()
-# async def handle_unknown_commands(message: types.Message):
-#     response_text = (
-#         "<b>Я не умею читать!</b>\n\n"
-#         "Вот что я понимаю:\n"
-#         " /start - Перезапустить бота\n"
-#         " /add - Добавить сайт\n"
-#         " /list - Показать список сайты\n"
-#         " /delete - Удалить сайт\n"
-#         " /history - История изменений\n"
-#         " /help - Справка\n\n"
-#         "Или используйте кнопки меню"
-#     )
-#
-#     await message.answer(text=response_text, reply_markup=get_keyboard())
+@dp.message(lambda message: message.text in ["Задать вопрос", "/questions"])
+async def question_commands(message: types.Message, state: FSMContext):
+    await state.set_state(Form.question)
+    await message.answer("<b>Задайте вопрос по информации с отслеживаемых сайтах</b>\n\n"
+                         "Для отмены введите /cancel", reply_markup=ReplyKeyboardRemove())
 
-
-@dp.message()
-async def handle_unknown_commands(message: types.Message):
+@dp.message(Form.question)
+async def answers(message: types.Message, state: FSMContext):
     if message.voice:
         voice = message.voice
         file_id = voice.file_id

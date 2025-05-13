@@ -1,12 +1,10 @@
 import os
-from multiprocessing.dummy import current_process
 
 if not os.path.exists("htmls"):
     os.mkdir("htmls")
 if not os.path.exists("db"):
     os.mkdir("db")
 
-import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -17,8 +15,6 @@ from aiogram.types import (
 )
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-import logging
-import aiohttp
 import db_function
 from parse import *
 
@@ -53,7 +49,7 @@ async def send_updates():
         if recognition_stack:
             update = recognition_stack.pop(0)
             tg_id = update["user"].tg_id
-            text = f"<b>Новые изменения на сайте {update['site'].name}:</b>\n\n{update['text']}\n\n{update['site'].href}"
+            text = f"<b>Новые изменения на сайте {update['site'].name}:</b>\n\n{update['text']}\n\n{update['site'].href}"
             await send(tg_id, text)
             await asyncio.sleep(1)
         else:
@@ -110,11 +106,11 @@ async def process_start_command(message: types.Message):
     try:
         await user_verification(user)
         await message.reply("<b>Бот для отслеживанию сайтов</b>\n\n"
-                            "Этот бот поможет вам отслеживать изменения на ваших сайтах и уведомлять вас о них.\n\n"
+                            "Этот бот поможет вам отслеживать изменения на ваших сайтах и уведомлять вас о них.\n\n"
                             "Доступные команды:\n"
-                            "/add - Добавить новый сайт\n"
-                            "/list - Список ваших сайтов\n"
-                            "/delete - Удалить сайт\n"
+                            "/add - Добавить новый сайт\n"
+                            "/list - Список ваших сайтов\n"
+                            "/delete - Удалить сайт\n"
                             "/history - Просмотреть историю изменений\n"
                             "/cancel - Отменить действие",
                             reply_markup=get_keyboard())
@@ -134,11 +130,11 @@ async def process_start_command(message: types.Message):
 async def process_help_command(message: types.Message):
     await message.reply("<b>Справочная информация</b>\n\n"
                         "<b>Как использовать:</b>\n"
-                        "1. Напишите /add для добавления нового сайта\n"
+                        "1. Напишите /add для добавления нового сайта\n"
                         "<b>Доступные команды:</b>\n"
-                        "/add - Добавить новый сайт\n"
-                        "/list - Список ваших сайтов\n"
-                        "/delete - Удалить сайт\n"
+                        "/add - Добавить новый сайт\n"
+                        "/list - Список ваших сайтов\n"
+                        "/delete - Удалить сайт\n"
                         "/history - Просмотреть историю изменений\n"
                         "/cancel - Отменить действие",
                         reply_markup=get_keyboard())
@@ -237,8 +233,8 @@ async def process_cancel_command(message: types.Message, state: FSMContext):
 async def process_add_command(message: types.Message, state: FSMContext):
     await user_verification(message.from_user)
     await state.set_state(Form.add_url)
-    await message.answer("<b>Добавление нового сайта</b>\n\n"
-                         "Пожалуйста, отправьте мне URL вашего сайта, который вы хотите отслеживать.\n"
+    await message.answer("<b>Добавление нового сайта</b>\n\n"
+                         "Пожалуйста, отправьте мне URL вашего сайта, который вы хотите отслеживать.\n"
                          "Например: <code>https://example.com</code>\n\n"
                          "Для отмены введите /cancel", reply_markup=ReplyKeyboardRemove())
 

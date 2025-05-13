@@ -1,4 +1,5 @@
 import os
+from multiprocessing.dummy import current_process
 
 if not os.path.exists("htmls"):
     os.mkdir("htmls")
@@ -114,7 +115,8 @@ async def process_start_command(message: types.Message):
                             "/add - Добавить новый сайт\n"
                             "/list - Список ваших сайтов\n"
                             "/delete - Удалить сайт\n"
-                            "/history - Просмотреть историю изменений",
+                            "/history - Просмотреть историю изменений\n"
+                            "/cancel - Отменить действие",
                             reply_markup=get_keyboard())
     except Exception as e:
         if "уже существует" in str(e):
@@ -137,7 +139,8 @@ async def process_help_command(message: types.Message):
                         "/add - Добавить новый сайт\n"
                         "/list - Список ваших сайтов\n"
                         "/delete - Удалить сайт\n"
-                        "/history - Просмотреть историю изменений",
+                        "/history - Просмотреть историю изменений\n"
+                        "/cancel - Отменить действие",
                         reply_markup=get_keyboard())
 
 
@@ -184,7 +187,7 @@ async def process_history_command(message: types.Message):
         await message.answer("Ошибка при получении истории изменений", reply_markup=get_keyboard())
 
 
-@dp.message(lambda message: message.text in  ["Удалить сайт", "/delete"])
+@dp.message(lambda message: message.text in ["Удалить сайт", "/delete"])
 async def process_delete_command(message: types.Message, state: FSMContext):
     try:
         user = message.from_user
@@ -220,13 +223,24 @@ async def process_delete_callback(callback: types.CallbackQuery):
         await callback.answer()
 
 
+@dp.message(lambda message: message.text in ["Отмена", "/cancel"])
+async def process_cancel_command(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        await message.answer("Нет действий для отмены", reply_markup=get_keyboard())
+        return
+    await state.clear()
+    await message.answer("Действие отменено", reply_markup=get_keyboard())
+
+
 @dp.message(lambda message: message.text in ["Добавить сайт", "/add"])
 async def process_add_command(message: types.Message, state: FSMContext):
     await user_verification(message.from_user)
     await state.set_state(Form.add_url)
     await message.answer("<b>Добавление нового сайта</b>\n\n"
                          "Пожалуйста, отправьте мне URL вашего сайта, который вы хотите отслеживать.\n"
-                         "Например: <code>https://example.com</code>", reply_markup=ReplyKeyboardRemove())
+                         "Например: <code>https://example.com</code>\n\n"
+                         "Для отмены введите /cancel", reply_markup=ReplyKeyboardRemove())
 
 
 @dp.message(Form.add_url)
@@ -298,7 +312,6 @@ async def handle_unknown_commands(message: types.Message):
         message_text = message.text
     response_text = await answer_on_site_info(message.from_user.username, message_text)
     await message.answer(text=response_text, reply_markup=get_keyboard())
-
 
 
 if __name__ == '__main__':

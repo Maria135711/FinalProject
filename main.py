@@ -196,9 +196,10 @@ async def process_delete_command(message: types.Message, state: FSMContext):
             [InlineKeyboardButton(text=site.name, callback_data=f"delete_{site.name}")]
             for site in sites
         ]
-
+        await state.set_state(Form.delete_site)
         await message.answer(
-            "Выберите сайт для удаления:",
+            "Выберите сайт для удаления:\n\n"
+            "Для отмены введите /cancel",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
         )
     except Exception as e:
